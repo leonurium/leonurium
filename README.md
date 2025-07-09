@@ -1,16 +1,24 @@
-### Suka Readme Bersih <3
+# 🎯 Let's Play Rock Paper Scissors!
 
-<!--
-**ranggaleoo/ranggaleoo** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Choose your move by clicking on one of the links below:
 
-Here are some ideas to get you started:
+[![Rock](https://img.shields.io/badge/Rock-🪨-blue?style=for-the-badge)](https://github.com/leonurium/leonurium/issues/new?title=RPS-ROCK&body=I%20choose%20**Rock**!%20🪨)
+[![Paper](https://img.shields.io/badge/Paper-📄-green?style=for-the-badge)](https://github.com/leonurium/leonurium/issues/new?title=RPS-PAPER&body=I%20choose%20**Paper**!%20📄)
+[![Scissors](https://img.shields.io/badge/Scissors-✂️-red?style=for-the-badge)](https://github.com/leonurium/leonurium/issues/new?title=RPS-SCISSORS&body=I%20choose%20**Scissors**!%20✂️)
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+<!-- GAME_STATS_START -->
+**🎮 Game Stats:**
+- 🎯 Total Games: 0
+- 🏆 Player Wins: 0
+- 🤖 Bot Wins: 0
+- 🤝 Draws: 0
+- 📊 Win Rate: 0%
+
+**📈 Last 5 Games:**
+*No games played yet*
+
+**🎲 Current Streak:** None
+<!-- GAME_STATS_END -->
+
+---
+*Game automatically updates when you create an issue! Try it out!*
