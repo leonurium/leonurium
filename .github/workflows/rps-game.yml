@@ -1,0 +1,196 @@
+name: Rock Paper Scissors Game
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  play-game:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.issue.title, 'RPS-')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: |
+        npm init -y
+        npm install @actions/core @actions/github
+        
+    - name: Play Rock Paper Scissors
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          // Get player move from issue title
+          const issueTitle = context.payload.issue.title;
+          const playerMove = issueTitle.replace('RPS-', '').toLowerCase();
+          
+          // Game logic
+          const moves = ['rock', 'paper', 'scissors'];
+          const botMove = moves[Math.floor(Math.random() * moves.length)];
+          
+          function determineWinner(player, bot) {
+            if (player === bot) return 'draw';
+            if (
+              (player === 'rock' && bot === 'scissors') ||
+              (player === 'paper' && bot === 'rock') ||
+              (player === 'scissors' && bot === 'paper')
+            ) {
+              return 'player';
+            }
+            return 'bot';
+          }
+          
+          const result = determineWinner(playerMove, botMove);
+          
+          // Read current README
+          const readmePath = 'README.md';
+          let readme = fs.readFileSync(readmePath, 'utf8');
+          
+          // Extract current stats
+          const statsRegex = /<!-- GAME_STATS_START -->([\s\S]*?)<!-- GAME_STATS_END -->/;
+          const statsMatch = readme.match(statsRegex);
+          
+          let totalGames = 0;
+          let playerWins = 0;
+          let botWins = 0;
+          let draws = 0;
+          let lastGames = [];
+          
+          if (statsMatch) {
+            const currentStats = statsMatch[1];
+            totalGames = parseInt(currentStats.match(/Total Games: (\d+)/)?.[1] || '0');
+            playerWins = parseInt(currentStats.match(/Player Wins: (\d+)/)?.[1] || '0');
+            botWins = parseInt(currentStats.match(/Bot Wins: (\d+)/)?.[1] || '0');
+            draws = parseInt(currentStats.match(/Draws: (\d+)/)?.[1] || '0');
+            
+            // Extract last games
+            const lastGamesMatch = currentStats.match(/\*\*📈 Last 5 Games:\*\*\n(.*?)(?=\n\*\*|$)/s);
+            if (lastGamesMatch && !lastGamesMatch[1].includes('No games played')) {
+              lastGames = lastGamesMatch[1].split('\n').filter(line => line.trim().startsWith('-')).map(line => line.trim());
+            }
+          }
+          
+          // Update stats
+          totalGames++;
+          if (result === 'player') playerWins++;
+          else if (result === 'bot') botWins++;
+          else draws++;
+          
+          const winRate = totalGames > 0 ? Math.round((playerWins / totalGames) * 100) : 0;
+          
+          // Create game result
+          const moveEmojis = { rock: '🪨', paper: '📄', scissors: '✂️' };
+          const resultEmojis = { player: '🎉', bot: '😢', draw: '🤝' };
+          const resultTexts = { player: 'You Win!', bot: 'Bot Wins!', draw: 'Draw!' };
+          
+          const gameResult = `- ${moveEmojis[playerMove]} vs ${moveEmojis[botMove]} → ${resultTexts[result]} ${resultEmojis[result]}`;
+          
+          // Update last games
+          lastGames.unshift(gameResult);
+          if (lastGames.length > 5) lastGames = lastGames.slice(0, 5);
+          
+          // Calculate current streak
+          let currentStreak = '';
+          if (lastGames.length > 0) {
+            let streakCount = 0;
+            let streakType = '';
+            
+            for (const game of lastGames) {
+              if (game.includes('You Win!')) {
+                if (streakType === 'win' || streakType === '') {
+                  streakType = 'win';
+                  streakCount++;
+                } else break;
+              } else if (game.includes('Bot Wins!')) {
+                if (streakType === 'loss' || streakType === '') {
+                  streakType = 'loss';
+                  streakCount++;
+                } else break;
+              } else if (game.includes('Draw!')) {
+                if (streakType === 'draw' || streakType === '') {
+                  streakType = 'draw';
+                  streakCount++;
+                } else break;
+              }
+            }
+            
+            if (streakCount > 1) {
+              const streakEmojis = { win: '🔥', loss: '💀', draw: '😐' };
+              const streakTexts = { win: 'Win', loss: 'Loss', draw: 'Draw' };
+              currentStreak = `${streakEmojis[streakType]} ${streakCount} ${streakTexts[streakType]} Streak`;
+            } else {
+              currentStreak = 'None';
+            }
+          }
+          
+          // Build new stats section
+          const newStats = `<!-- GAME_STATS_START -->
+          **🎮 Game Stats:**
+          - 🎯 Total Games: ${totalGames}
+          - 🏆 Player Wins: ${playerWins}
+          - 🤖 Bot Wins: ${botWins}
+          - 🤝 Draws: ${draws}
+          - 📊 Win Rate: ${winRate}%
+
+          **📈 Last 5 Games:**
+          ${lastGames.length > 0 ? lastGames.join('\n') : '*No games played yet*'}
+
+          **🎲 Current Streak:** ${currentStreak}
+          <!-- GAME_STATS_END -->`;
+          
+          // Replace stats in README
+          readme = readme.replace(statsRegex, newStats);
+          
+          // Write updated README
+          fs.writeFileSync(readmePath, readme);
+          
+          // Commit changes
+          const { execSync } = require('child_process');
+          execSync('git config --local user.email "leorangga30@ymail.com"');
+          execSync('git config --local user.name "leonurium"');
+          execSync('git add README.md');
+          execSync(`git commit -m "🎮 RPS: ${context.payload.issue.user.login} played ${playerMove} - ${resultTexts[result]}"`);
+          execSync('git push');
+          
+          // Close the issue with a comment
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `## 🎮 Game Result\n\n**You played:** ${moveEmojis[playerMove]} ${playerMove.toUpperCase()}\n**Bot played:** ${moveEmojis[botMove]} ${botMove.toUpperCase()}\n\n**Result:** ${resultTexts[result]} ${resultEmojis[result]}\n\n---\n\n**Updated Stats:**\n- 🎯 Total Games: ${totalGames}\n- 🏆 Your Wins: ${playerWins}\n- 🤖 Bot Wins: ${botWins}\n- 🤝 Draws: ${draws}\n- 📊 Win Rate: ${winRate}%\n\nThanks for playing! The README has been automatically updated. 🚀`
+          });
+          
+          await github.rest.issues.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            state: 'closed'
+          });
+        
+    - name: Handle errors
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `## ❌ Game Error\n\nSorry, there was an error processing your move. Please try again!\n\nIf this persists, please contact @leonurium.`
+          });
+          
+          await github.rest.issues.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            state: 'closed'
+          });
