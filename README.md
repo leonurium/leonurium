@@ -8,13 +8,14 @@ Choose your move by clicking on one of the links below:
 
 <!-- GAME_STATS_START -->
 **🎮 Game Stats:**
-- 🎯 Total Games: 1
+- 🎯 Total Games: 2
 - 🏆 Player Wins: 1
-- 🤖 Bot Wins: 0
+- 🤖 Bot Wins: 1
 - 🤝 Draws: 0
-- 📊 Win Rate: 100%
+- 📊 Win Rate: 50%
 
 **📈 Last 5 Games:**
+- 🪨 vs 📄 → Bot Wins! 😢
 - 📄 vs 🪨 → You Win! 🎉
 
 **🎲 Current Streak:** None
